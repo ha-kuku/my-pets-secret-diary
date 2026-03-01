@@ -1,3 +1,7 @@
+export const config = {
+  runtime: 'edge',
+};
+
 import { GoogleGenerativeAI } from '@google/generative-ai';
 const SYSTEM_PROMPT = `너는 반려동물 1인칭 시점의 일기를 작성하는 AI야.
 
@@ -31,20 +35,20 @@ export default async function handler(req: Request): Promise<Response> {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: 'GEMINI_API_KEY is not configured' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'GEMINI_API_KEY is not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   let body: { image?: string; report?: string };
   try {
     body = (await req.json()) as { image?: string; report?: string };
   } catch {
-    return new Response(
-      JSON.stringify({ error: 'Invalid JSON body' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const { image, report } = body;
@@ -52,17 +56,17 @@ export default async function handler(req: Request): Promise<Response> {
   const isImageValid = typeof image === 'string' && image.length > 0;
 
   if (!isReportValid) {
-    return new Response(
-      JSON.stringify({ error: 'report is required and must be non-empty' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'report is required and must be non-empty' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   if (!isImageValid) {
-    return new Response(
-      JSON.stringify({ error: 'image (base64) is required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'image (base64) is required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -99,20 +103,17 @@ export default async function handler(req: Request): Promise<Response> {
     const text = response.text();
 
     if (!text) {
-      return new Response(
-        JSON.stringify({ error: 'No response from Gemini' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'No response from Gemini' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const jsonMatch = text.match(/\{[\s\S]*"diary"[\s\S]*\}/);
     const parsed = jsonMatch ? (JSON.parse(jsonMatch[0]) as { diary?: string }) : null;
 
     if (!parsed?.diary) {
-      return new Response(
-        JSON.stringify({ diary: text.trim() }),
-        { headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ diary: text.trim() }), { headers: { 'Content-Type': 'application/json' } });
     }
 
     return new Response(JSON.stringify({ diary: parsed.diary }), {
@@ -120,9 +121,9 @@ export default async function handler(req: Request): Promise<Response> {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

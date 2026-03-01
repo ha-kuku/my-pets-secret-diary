@@ -1,4 +1,4 @@
-const MAX_DIMENSION_PX = 512;
+const MAX_DIMENSION_PX = 1024;
 const JPEG_QUALITY = 0.85;
 
 export async function resizeImageForApi(dataUrl: string): Promise<string> {
