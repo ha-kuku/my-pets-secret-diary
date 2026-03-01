@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { resizeImageForApi } from '../lib/resizeImage';
+import { ANALYTICS_EVENTS, track } from '../lib/analytics';
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -52,6 +53,7 @@ export function PhotoUploader({
         setIsResizing(true);
         try {
           const resizedDataUrl = await resizeImageForApi(dataUrl);
+          track(ANALYTICS_EVENTS.PHOTO_UPLOADED, { file_type: file.type });
           onImageSelect(file, resizedDataUrl);
         } catch {
           onError('이미지 처리에 실패했어요.');
@@ -83,6 +85,7 @@ export function PhotoUploader({
         setIsResizing(true);
         try {
           const resizedDataUrl = await resizeImageForApi(dataUrl);
+          track(ANALYTICS_EVENTS.PHOTO_UPLOADED, { file_type: file.type });
           onImageSelect(file, resizedDataUrl);
         } catch {
           onError('이미지 처리에 실패했어요.');

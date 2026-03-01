@@ -3,6 +3,7 @@ import { PhotoUploader } from './components/PhotoUploader';
 import { ReportInput } from './components/ReportInput';
 import { DiaryResult } from './components/DiaryResult';
 import { generateDiary } from './lib/gemini';
+import { ANALYTICS_EVENTS, track } from './lib/analytics';
 
 type PageState =
   | { step: 'input'; imageUrl: string | null; report: string }
@@ -95,17 +96,24 @@ function App() {
 
     dispatch({ type: 'SUBMIT' });
     setError(null);
+    track(ANALYTICS_EVENTS.DIARY_GENERATE_STARTED);
 
     try {
       const { diary } = await generateDiary(state.imageUrl, state.report.trim());
+      track(ANALYTICS_EVENTS.DIARY_GENERATE_COMPLETED, {
+        paragraph_count: diary.length,
+      });
       dispatch({ type: 'SET_DIARY', payload: diary });
     } catch (err) {
-      setError(err instanceof Error ? err.message : '일기 생성에 실패했어요.');
+      const message = err instanceof Error ? err.message : '일기 생성에 실패했어요.';
+      track(ANALYTICS_EVENTS.DIARY_GENERATE_FAILED, { error_message: message });
+      setError(message);
       dispatch({ type: 'SET_ERROR', payload: '' });
     }
   }, [state]);
 
   const handleReset = useCallback(() => {
+    track(ANALYTICS_EVENTS.RESET_CLICKED);
     dispatch({ type: 'RESET' });
     setError(null);
   }, []);

@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { ANALYTICS_EVENTS, track } from '../lib/analytics';
 
 const TWITTER_SHARE_BASE = 'https://twitter.com/intent/tweet';
 const SERVICE_NAME = '내새끼의 속마음';
@@ -23,6 +24,7 @@ export function ShareButtons({
 
     const canShare = navigator.canShare?.({ files: [file] }) ?? false;
     if (!canShare) {
+      track(ANALYTICS_EVENTS.SHARE_CLICKED, { platform: 'twitter' });
       const twitterUrl = shareUrl
         ? `${TWITTER_SHARE_BASE}?text=${encodeURIComponent(SERVICE_NAME)}&url=${encodeURIComponent(shareUrl)}`
         : `${TWITTER_SHARE_BASE}?text=${encodeURIComponent(SERVICE_NAME)}`;
@@ -31,6 +33,7 @@ export function ShareButtons({
     }
 
     try {
+      track(ANALYTICS_EVENTS.SHARE_CLICKED, { platform: 'web_share' });
       await navigator.share({
         title: SERVICE_NAME,
         text: '우리 반려동물의 비밀 일기를 확인해보세요!',
@@ -44,6 +47,7 @@ export function ShareButtons({
   }, [polaroidBlob, shareUrl]);
 
   const handleTwitterShare = useCallback(() => {
+    track(ANALYTICS_EVENTS.SHARE_CLICKED, { platform: 'twitter' });
     const text = shareUrl
       ? `${SERVICE_NAME} - 우리 반려동물의 비밀 일기`
       : SERVICE_NAME;

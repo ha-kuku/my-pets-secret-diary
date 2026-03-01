@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { composePolaroid, blobToBase64 } from '../lib/composeCanvas';
 import { uploadPolaroid } from '../lib/gemini';
+import { ANALYTICS_EVENTS, track } from '../lib/analytics';
 import { ShareButtons } from './ShareButtons';
 
 type DiaryResultProps = {
@@ -38,6 +39,7 @@ export function DiaryResult({
 
   const handleDownload = useCallback(() => {
     if (!polaroidBlob) return;
+    track(ANALYTICS_EVENTS.POLAROID_DOWNLOADED, {});
     const url = URL.createObjectURL(polaroidBlob);
     const a = document.createElement('a');
     a.href = url;
@@ -57,6 +59,7 @@ export function DiaryResult({
     try {
       const base64 = await blobToBase64(polaroidBlob);
       const { shareUrl: url } = await uploadPolaroid(base64);
+      track(ANALYTICS_EVENTS.SHARE_LINK_GENERATED, {});
       setShareUrl(url);
       await navigator.clipboard.writeText(url);
     } catch (err) {
