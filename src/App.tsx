@@ -7,13 +7,13 @@ import { generateDiary } from './lib/gemini';
 type PageState =
   | { step: 'input'; imageUrl: string | null; report: string }
   | { step: 'loading'; imageUrl: string; report: string }
-  | { step: 'result'; imageUrl: string; diary: string };
+  | { step: 'result'; imageUrl: string; diary: string[] };
 
 type Action =
   | { type: 'SET_IMAGE'; payload: { file: File; dataUrl: string } }
   | { type: 'SET_REPORT'; payload: string }
   | { type: 'SUBMIT' }
-  | { type: 'SET_DIARY'; payload: string }
+  | { type: 'SET_DIARY'; payload: string[] }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'RESET' };
 

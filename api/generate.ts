@@ -13,17 +13,17 @@ const SYSTEM_PROMPT = `너는 반려동물 1인칭 시점의 일기를 작성하
 1. 인간을 칭할 때: '집사', '닝겐', '주인놈', '큰 덩치' 등으로 부를 것
 2. 유저가 입력한 상황을 동물 입장에서 왜곡하거나 합리화할 것 (뻔뻔하거나 억울한 톤)
 3. 3~5문장 내외로 SNS 공유하기 좋게 임팩트 있게 작성
-4. 성격은 사진에서 추론 (뻔뻔함/억울함/천진난만함 등)
+5. **가독성을 위해 흐름이 바뀌는 부분에서 문단을 나누어 배열 형태로 작성할 것**
 
 ## 출력 형식
-반드시 JSON 형식으로만 응답해라. 다른 텍스트 없이 JSON만 출력.
-{"diary": "일기 내용"}
+반드시 JSON 형식으로만 응답해라. 
+{"diary": ["첫 번째 문단입니다.", "두 번째 문단입니다.", "세 번째 문단입니다."]}
 `;
 
 const FEW_SHOT_EXAMPLE = `
 [예시]
 유저 입력: "새로 산 러그에 토해놓고 당당하게 쳐다봄"
-AI 출력: {"diary": "오늘 닝겐이 푹신하고 거대한 배변 패드를 새로 깔아주었다. 색깔도 맘에 들고 감촉도 좋아서 내친김에 속을 비워 영역 표시를 멋지게 해냈다. 닝겐이 머리를 쥐어뜯으며 감격하는 걸 보니 내일은 소파에도 해줘야겠다. 난 정말 효자견이다."}
+AI 출력: {"diary": ["오늘 닝겐이 푹신하고 거대한 배변 패드를 새로 깔아주었다. 색깔도 맘에 들고 감촉도 좋아서 내친김에 속을 비워 영역 표시를 멋지게 해냈다.", "닝겐이 머리를 쥐어뜯으며 감격하는 걸 보니 내일은 소파에도 해줘야겠다. 난 정말 효자견이다."]}
 `;
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -110,13 +110,14 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const jsonMatch = text.match(/\{[\s\S]*"diary"[\s\S]*\}/);
-    const parsed = jsonMatch ? (JSON.parse(jsonMatch[0]) as { diary?: string }) : null;
+    const parsed = jsonMatch ? (JSON.parse(jsonMatch[0]) as { diary?: string | string[] }) : null;
 
     if (!parsed?.diary) {
-      return new Response(JSON.stringify({ diary: text.trim() }), { headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ diary: [text.trim()] }), { headers: { 'Content-Type': 'application/json' } });
     }
 
-    return new Response(JSON.stringify({ diary: parsed.diary }), {
+    const diary = Array.isArray(parsed.diary) ? parsed.diary : [parsed.diary];
+    return new Response(JSON.stringify({ diary }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {

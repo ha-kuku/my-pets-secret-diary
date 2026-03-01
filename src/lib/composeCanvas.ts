@@ -3,20 +3,79 @@ const POLAROID_PHOTO_HEIGHT_PX = 320;
 const DIARY_FONT_SIZE_PX = 16;
 const DIARY_LINE_HEIGHT_PX = 24;
 const DIARY_PADDING_PX = 20;
-const MAX_DIARY_WIDTH_PX = 320;
+const DIARY_GAP_FROM_PHOTO_PX = 8;
+const PHOTO_WIDTH_PX = POLAROID_PHOTO_HEIGHT_PX;
+const MAX_DIARY_WIDTH_PX = PHOTO_WIDTH_PX - DIARY_PADDING_PX * 2;
+const MAX_DIARY_LINES = 8;
+
+const PARAGRAPH_GAP_PX = 8;
+
+function buildDiaryLines(
+  paragraphs: string[],
+  maxWidthPx: number,
+  maxLines: number
+): { lines: string[]; fontSize: number; lineHeight: number } {
+  let fontSize = DIARY_FONT_SIZE_PX;
+  let lineHeight = DIARY_LINE_HEIGHT_PX;
+
+  const flattenWithParagraphGaps = (paraList: string[]): string[] => {
+    const result: string[] = [];
+    paraList.forEach((para, i) => {
+      const wrapped = wrapText(para, maxWidthPx, fontSize);
+      result.push(...wrapped);
+      if (i < paraList.length - 1) result.push('');
+    });
+    return result;
+  };
+
+  let lines = flattenWithParagraphGaps(paragraphs);
+
+  if (lines.length > maxLines) {
+    fontSize = 14;
+    lineHeight = 22;
+    lines = flattenWithParagraphGaps(paragraphs);
+  }
+  if (lines.length > maxLines) {
+    fontSize = 12;
+    lineHeight = 20;
+    lines = flattenWithParagraphGaps(paragraphs);
+  }
+  if (lines.length > maxLines) {
+    const flat = lines.filter((l) => l !== '');
+    lines = flat.slice(0, maxLines);
+  }
+
+  return { lines, fontSize, lineHeight };
+}
 
 export async function composePolaroid(
   imageUrl: string,
-  diaryText: string
+  diaryParagraphs: string[]
 ): Promise<Blob> {
   const image = await loadImage(imageUrl);
-  const canvas = document.createElement('canvas');
+  try {
+    await document.fonts.load(`${DIARY_FONT_SIZE_PX}px "Noto Sans KR"`);
+  } catch {
+    // Font load 실패 시 기본 폰트 사용
+  }
 
-  const photoWidth = POLAROID_PHOTO_HEIGHT_PX;
+  const canvas = document.createElement('canvas');
+  const photoWidth = PHOTO_WIDTH_PX;
   const photoHeight = POLAROID_PHOTO_HEIGHT_PX;
 
-  const diaryLines = wrapText(diaryText, MAX_DIARY_WIDTH_PX, DIARY_FONT_SIZE_PX);
-  const diaryHeight = diaryLines.length * DIARY_LINE_HEIGHT_PX + DIARY_PADDING_PX * 2;
+  let { lines: diaryLines, fontSize, lineHeight } = buildDiaryLines(
+    diaryParagraphs,
+    MAX_DIARY_WIDTH_PX,
+    MAX_DIARY_LINES
+  );
+
+  const lineCount = diaryLines.length;
+  const paragraphGapCount = diaryLines.filter((l) => l === '').length;
+  const diaryHeight =
+    DIARY_GAP_FROM_PHOTO_PX +
+    lineCount * lineHeight +
+    paragraphGapCount * PARAGRAPH_GAP_PX +
+    DIARY_PADDING_PX * 2;
 
   const canvasWidth = photoWidth + POLAROID_PADDING_PX * 2;
   const canvasHeight = photoHeight + diaryHeight + POLAROID_PADDING_PX * 2;
@@ -56,18 +115,35 @@ export async function composePolaroid(
     photoHeight
   );
 
+  const diaryAreaX = POLAROID_PADDING_PX + DIARY_PADDING_PX;
+  const diaryAreaY =
+    POLAROID_PADDING_PX + photoHeight + DIARY_GAP_FROM_PHOTO_PX;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(
+    POLAROID_PADDING_PX,
+    POLAROID_PADDING_PX + photoHeight,
+    photoWidth,
+    diaryHeight
+  );
+  ctx.clip();
+
   ctx.fillStyle = '#2c2419';
-  ctx.font = `${DIARY_FONT_SIZE_PX}px "Noto Sans KR", sans-serif`;
+  ctx.font = `${fontSize}px "Noto Sans KR", sans-serif`;
   ctx.textAlign = 'left';
 
-  const diaryY = POLAROID_PADDING_PX + photoHeight + DIARY_PADDING_PX;
-  diaryLines.forEach((line, i) => {
-    ctx.fillText(
-      line,
-      POLAROID_PADDING_PX + DIARY_PADDING_PX,
-      diaryY + DIARY_PADDING_PX + (i + 1) * DIARY_LINE_HEIGHT_PX
-    );
+  let yOffset = 0;
+  diaryLines.forEach((line) => {
+    yOffset += lineHeight;
+    if (line !== '') {
+      ctx.fillText(line, diaryAreaX, diaryAreaY + yOffset);
+    } else {
+      yOffset += PARAGRAPH_GAP_PX;
+    }
   });
+
+  ctx.restore();
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(

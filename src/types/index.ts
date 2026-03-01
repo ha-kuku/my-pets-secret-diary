@@ -3,7 +3,7 @@ export type DiaryResult = {
 };
 
 export type GenerateResponse = {
-  diary: string;
+  diary: string[];
 };
 
 export type UploadResponse = {

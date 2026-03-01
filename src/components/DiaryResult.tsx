@@ -5,7 +5,7 @@ import { ShareButtons } from './ShareButtons';
 
 type DiaryResultProps = {
   imageUrl: string;
-  diary: string;
+  diary: string[];
   onReset: () => void;
 };
 
