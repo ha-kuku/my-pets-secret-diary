@@ -1,8 +1,4 @@
-import {
-  ANALYTICS_EVENTS,
-  type AnalyticsEventName,
-  type AnalyticsEventParams,
-} from './schema';
+import { type AnalyticsEventName, type AnalyticsEventParams } from './schema';
 
 declare global {
   interface Window {
@@ -12,12 +8,8 @@ declare global {
   }
 }
 
-const GA4_MEASUREMENT_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID as
-  | string
-  | undefined;
-const CLARITY_PROJECT_ID = import.meta.env.VITE_CLARITY_PROJECT_ID as
-  | string
-  | undefined;
+const GA4_MEASUREMENT_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined;
+const CLARITY_PROJECT_ID = import.meta.env.VITE_CLARITY_PROJECT_ID as string | undefined;
 
 let isInitialized = false;
 
@@ -51,10 +43,9 @@ function loadGA4(measurementId: string): void {
 function loadClarity(projectId: string): void {
   (function (c: Window, l: Document, a: string, r: string, i?: string) {
     (c as unknown as Record<string, unknown>)[a] =
-      (c as unknown as Record<string, unknown>)[a] || function () {
-        ((c as unknown as Record<string, unknown>)[r] as unknown[]).push(
-          arguments
-        );
+      (c as unknown as Record<string, unknown>)[a] ||
+      function () {
+        ((c as unknown as Record<string, unknown>)[r] as unknown[]).push(arguments);
       };
     const t = l.createElement('script');
     t.async = true;
@@ -64,10 +55,7 @@ function loadClarity(projectId: string): void {
   })(window, document, 'clarity', 'clarityQueue', projectId);
 }
 
-export function track<E extends AnalyticsEventName>(
-  eventName: E,
-  params?: AnalyticsEventParams[E]
-): void {
+export function track<E extends AnalyticsEventName>(eventName: E, params?: AnalyticsEventParams[E]): void {
   const safeParams = params ?? {};
 
   if (window.gtag && GA4_MEASUREMENT_ID) {
