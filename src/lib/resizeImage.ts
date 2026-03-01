@@ -1,14 +1,10 @@
-const MAX_DIMENSION_PX = 1024;
+const MAX_DIMENSION_PX = 512;
 const JPEG_QUALITY = 0.85;
 
 export async function resizeImageForApi(dataUrl: string): Promise<string> {
   const img = await loadImage(dataUrl);
 
-  const { width, height } = computeResizedDimensions(
-    img.width,
-    img.height,
-    MAX_DIMENSION_PX
-  );
+  const { width, height } = computeResizedDimensions(img.width, img.height, MAX_DIMENSION_PX);
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -34,10 +30,9 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 function computeResizedDimensions(
   origWidth: number,
   origHeight: number,
-  maxDimension: number
+  maxDimension: number,
 ): { width: number; height: number } {
-  const needsResize =
-    origWidth > maxDimension || origHeight > maxDimension;
+  const needsResize = origWidth > maxDimension || origHeight > maxDimension;
 
   if (!needsResize) {
     return { width: origWidth, height: origHeight };
