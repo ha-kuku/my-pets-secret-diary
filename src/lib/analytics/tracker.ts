@@ -41,18 +41,20 @@ function loadGA4(measurementId: string): void {
 }
 
 function loadClarity(projectId: string): void {
-  (function (c: Window, l: Document, a: string, r: string, i?: string) {
-    (c as unknown as Record<string, unknown>)[a] =
-      (c as unknown as Record<string, unknown>)[a] ||
-      function () {
-        ((c as unknown as Record<string, unknown>)[r] as unknown[]).push(arguments);
+  // 공식 Clarity 스니펫: clarity.q에 큐를 두고, 스크립트 로드 전 호출을 큐잉
+  (function (c: Window, l: Document, a: string, i: string) {
+    const w = c as unknown as Record<string, unknown>;
+    w[a] =
+      w[a] ||
+      function (...args: unknown[]) {
+        ((w[a] as { q?: unknown[] }).q = (w[a] as { q?: unknown[] }).q || []).push(args);
       };
     const t = l.createElement('script');
     t.async = true;
     t.src = 'https://www.clarity.ms/tag/' + i;
     const y = l.getElementsByTagName('script')[0];
     y.parentNode?.insertBefore(t, y);
-  })(window, document, 'clarity', 'clarityQueue', projectId);
+  })(window, document, 'clarity', projectId);
 }
 
 export function track<E extends AnalyticsEventName>(eventName: E, params?: AnalyticsEventParams[E]): void {
